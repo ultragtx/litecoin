@@ -1,9 +1,9 @@
-Litecoin Core version *0.15.1* is now available from:
+Litecoin Core version 0.16.2 is now available from:
 
-  <https://download.litecoin.org/litecoin-0.15.1/>
+  <https://download.litecoin.org/litecoin-0.16.2/>
 
-This is a new minor version release, including various bugfixes and
-performance improvements, as well as updated translations.
+This is a new minor version release, with various bugfixes
+as well as updated translations.
 
 Please report bugs using the issue tracker at GitHub:
 
@@ -17,33 +17,25 @@ How to Upgrade
 ==============
 
 If you are running an older version, shut it down. Wait until it has completely
-shut down (which might take a few minutes for older versions), then run the 
+shut down (which might take a few minutes for older versions), then run the
 installer (on Windows) or just copy over `/Applications/Litecoin-Qt` (on Mac)
 or `litecoind`/`litecoin-qt` (on Linux).
 
-The first time you run version 0.15.0 or higher, your chainstate database will
-be converted to a new format, which will take anywhere from a few minutes to
-half an hour, depending on the speed of your machine.
-
-The file format of `fee_estimates.dat` changed in version 0.15.0. Hence, a
-downgrade from version 0.15 or upgrade to version 0.15 will cause all fee
-estimates to be discarded.
+The first time you run version 0.15.0 or newer, your chainstate database will be converted to a
+new format, which will take anywhere from a few minutes to half an hour,
+depending on the speed of your machine.
 
 Note that the block database format also changed in version 0.8.0 and there is no
-automatic upgrade code from before version 0.8 to version 0.15.0. Upgrading
-directly from 0.7.x and earlier without redownloading the blockchain is not supported.
+automatic upgrade code from before version 0.8 to version 0.15.0 or higher. Upgrading
+directly from 0.7.x and earlier without re-downloading the blockchain is not supported.
 However, as usual, old wallet versions are still supported.
 
 Downgrading warning
 -------------------
 
-The chainstate database for this release is not compatible with previous
-releases, so if you run 0.15 and then decide to switch back to any
-older version, you will need to run the old release with the `-reindex-chainstate`
-option to rebuild the chainstate data structures in the old format.
-
-If your node has pruning enabled, this will entail re-downloading and
-processing the entire blockchain.
+Wallets created in 0.16 and later are not compatible with versions prior to 0.16
+and will not work if you try to use newly created wallets in older versions. Existing
+wallets that were created with older versions are not affected by this.
 
 Compatibility
 ==============
@@ -54,196 +46,104 @@ the Linux kernel, macOS 10.8+, and Windows Vista and later. Windows XP is not su
 Litecoin Core should also work on most other Unix-like systems but is not
 frequently tested on them.
 
-
 Notable changes
 ===============
 
-Network fork safety enhancements
---------------------------------
+Miner block size removed
+------------------------
 
-A number of changes to the way Litecoin Core deals with peer connections and invalid blocks
-have been made, as a safety precaution against blockchain forks and misbehaving peers.
+The `-blockmaxsize` option for miners to limit their blocks' sizes was
+deprecated in version 0.15.1, and has now been removed. Miners should use the
+`-blockmaxweight` option if they want to limit the weight of their blocks'
+weights.
 
-- Unrequested blocks with less work than the minimum-chain-work are now no longer processed even
-if they have more work than the tip (a potential issue during IBD where the tip may have low-work).
-This prevents peers wasting the resources of a node. 
+0.16.2 change log
+------------------
 
-- Peers which provide a chain with less work than the minimum-chain-work during IBD will now be disconnected.
-
-- For a given outbound peer, we now check whether their best known block has at least as much work as our tip. If it
-doesn't, and if we still haven't heard about a block with sufficient work after a 20 minute timeout, then we send
-a single getheaders message, and wait 2 more minutes. If after two minutes their best known block has insufficient
-work, we disconnect that peer. We protect 4 of our outbound peers from being disconnected by this logic to prevent
-excessive network topology changes as a result of this algorithm, while still ensuring that we have a reasonable
-number of nodes not known to be on bogus chains.
-
-- Outbound (non-manual) peers that serve us block headers that are already known to be invalid (other than compact
-block announcements, because BIP 152 explicitly permits nodes to relay compact blocks before fully validating them)
-will now be disconnected.
-
-- If the chain tip has not been advanced for over 30 minutes, we now assume the tip may be stale and will try to connect
-to an additional outbound peer. A periodic check ensures that if this extra peer connection is in use, we will disconnect
-the peer that least recently announced a new block.
-
-- The set of all known invalid-themselves blocks (i.e. blocks which we attempted to connect but which were found to be
-invalid) are now tracked and used to check if new headers build on an invalid chain. This ensures that everything that
-descends from an invalid block is marked as such.
-
-Minimum relay fee lowered
--------------------------
-
-The minimum relay fee `-minrelayfee` has been lowered to 0.01 lites per kB (0.00001 LTC). This is to prepare for dropping the minimum transaction fee to 0.1 lites per kB (0.0001 LTC) in the next release.
-
-Mempool replacement disabled by default
----------------------------------------
-
-Mempool replacement `--mempoolreplacement` has been disabled by default.
-
-Miner block size limiting deprecated
-------------------------------------
-
-Though blockmaxweight has been preferred for limiting the size of blocks returned by
-getblocktemplate since 0.13.0, blockmaxsize remained as an option for those who wished
-to limit their block size directly. Using this option resulted in a few UI issues as
-well as non-optimal fee selection and ever-so-slightly worse performance, and has thus
-now been deprecated. Further, the blockmaxsize option is now used only to calculate an
-implied blockmaxweight, instead of limiting block size directly. Any miners who wish
-to limit their blocks by size, instead of by weight, will have to do so manually by
-removing transactions from their block template directly.
-
-
-GUI settings backed up on reset
--------------------------------
-
-The GUI settings will now be written to `guisettings.ini.bak` in the data directory before wiping them when
-the `-resetguisettings` argument is used. This can be used to retroactively troubleshoot issues due to the
-GUI settings.
-
-
-Duplicate wallets disallowed
-----------------------------
-
-Previously, it was possible to open the same wallet twice by manually copying the wallet file, causing
-issues when both were opened simultaneously. It is no longer possible to open copies of the same wallet.
-
-
-Debug `-minimumchainwork` argument added
-----------------------------------------
-
-A hidden debug argument `-minimumchainwork` has been added to allow a custom minimum work value to be used
-when validating a chain.
-
-
-Low-level RPC changes
-----------------------
-
-- The "currentblocksize" value in getmininginfo has been removed.
-
-- `dumpwallet` no longer allows overwriting files. This is a security measure
-  as well as prevents dangerous user mistakes.
-
-- `backupwallet` will now fail when attempting to backup to source file, rather than
-  destroying the wallet.
-
-- `listsinceblock` will now throw an error if an unknown `blockhash` argument
-  value is passed, instead of returning a list of all wallet transactions since
-  the genesis block. The behaviour is unchanged when an empty string is provided.
-
-0.15.1 Change log
-=================
+### Policy
+- #11423 `d353dd1` [Policy] Several transaction standardness rules (jl2012)
 
 ### Mining
-- #11100 `7871a7d` Fix confusing blockmax{size,weight} options, dont default to throwing away money (TheBlueMatt)
+- #12756 `e802c22` [config] Remove blockmaxsize option (jnewbery)
 
-### RPC and other APIs
-- #10859 `2a5d099` gettxout: Slightly improve doc and tests (jtimon)
-- #11267 `b1a6c94` update cli for estimate\*fee argument rename (laanwj)
-- #11483 `20cdc2b` Fix importmulti bug when importing an already imported key (pedrobranco)
-- #9937 `a43be5b` Prevent `dumpwallet` from overwriting files (laanwj)
-- #11465 `405e069` Update named args documentation for importprivkey (dusty-wil)
-- #11131 `b278a43` Write authcookie atomically (laanwj)
-- #11565 `7d4546f` Make listsinceblock refuse unknown block hash (ryanofsky)
-- #11593 `8195cb0` Work-around an upstream libevent bug (theuni)
+### Block and transaction handling
+- #13199 `c71e535` Bugfix: ensure consistency of m_failed_blocks after reconsiderblock (sdaftuar)
+- #13023 `bb79aaf` Fix some concurrency issues in ActivateBestChain() (skeees)
 
 ### P2P protocol and network code
-- #11397 `27e861a` Improve and document SOCKS code (laanwj)
-- #11252 `0fe2a9a` When clearing addrman clear mapInfo and mapAddr (instagibbs)
-- #11527 `a2bd86a` Remove my testnet DNS seed (schildbach)
-- #10756 `0a5477c` net processing: swap out signals for an interface class (theuni)
-- #11531 `55b7abf` Check that new headers are not a descendant of an invalid block (more effeciently) (TheBlueMatt)
-- #11560 `49bf090` Connect to a new outbound peer if our tip is stale (sdaftuar)
-- #11568 `fc966bb` Disconnect outbound peers on invalid chains (sdaftuar)
-- #11578 `ec8dedf` Add missing lock in ProcessHeadersMessage(...) (practicalswift)
-- #11456 `6f27965` Replace relevant services logic with a function suite (TheBlueMatt)
-- #11490 `bf191a7` Disconnect from outbound peers with bad headers chains (sdaftuar)
-
-### Validation
-- #10357 `da4908c` Allow setting nMinimumChainWork on command line (sdaftuar)
-- #11458 `2df65ee` Don't process unrequested, low-work blocks (sdaftuar)
-
-### Build system
-- #11440 `b6c0209` Fix validationinterface build on super old boost/clang (TheBlueMatt)
-- #11530 `265bb21` Add share/rpcuser to dist. source code archive (MarcoFalke)
-
-### GUI
-- #11334 `19d63e8` Remove custom fee radio group and remove nCustomFeeRadio setting (achow101)
-- #11198 `7310f1f` Fix display of package name on 'open config file' tooltip (esotericnonsense)
-- #11015 `6642558` Add delay before filtering transactions (lclc)
-- #11338 `6a62c74` Backup former GUI settings on `-resetguisettings` (laanwj)
-- #11335 `8d13b42` Replace save|restoreWindowGeometry with Qt functions (MeshCollider)
-- #11237 `2e31b1d` Fixing division by zero in time remaining (MeshCollider)
-- #11247 `47c02a8` Use IsMine to validate custom change address (MarcoFalke)
+- #12626 `f60e84d` Limit the number of IPs addrman learns from each DNS seeder (EthanHeilman)
 
 ### Wallet
-- #11017 `9e8aae3` Close DB on error (kallewoof)
-- #11225 `6b4d9f2` Update stored witness in AddToWallet (sdaftuar)
-- #11126 `2cb720a` Acquire cs_main lock before cs_wallet during wallet initialization (ryanofsky)
-- #11476 `9c8006d` Avoid opening copied wallet databases simultaneously (ryanofsky)
-- #11492 `de7053f` Fix leak in CDB constructor (promag)
-- #11376 `fd79ed6` Ensure backupwallet fails when attempting to backup to source file (tomasvdw)
-- #11326 `d570aa4` Fix crash on shutdown with invalid wallet (MeshCollider)
+- #13265 `5d8de76` Exit SyncMetaData if there are no transactions to sync (laanwj)
+- #13030 `5ff571e` Fix zapwallettxes/multiwallet interaction. (jnewbery)
+- #13622 `c04a4a5` Remove mapRequest tracking that just effects Qt display. (TheBlueMatt)
+- #12905 `cfc6f74` [rpcwallet] Clamp walletpassphrase value at 100M seconds (sdaftuar)
+- #13437 `ed82e71` wallet: Erase wtxOrderd wtx pointer on removeprunedfunds (MarcoFalke)
+
+### RPC and other APIs
+- #13451 `cbd2f70` rpc: expose CBlockIndex::nTx in getblock(header) (instagibbs)
+- #13507 `f7401c8` RPC: Fix parameter count check for importpubkey (kristapsk)
+- #13452 `6b9dc8c` rpc: have verifytxoutproof check the number of txns in proof structure (instagibbs)
+- #12837 `bf1f150` rpc: fix type mistmatch in `listreceivedbyaddress` (joemphilips)
+- #12743 `657dfc5` Fix csBestBlock/cvBlockChange waiting in rpc/mining (sipa)
+
+### GUI
+- #12999 `1720eb3` Show the Window when double clicking the taskbar icon (ken2812221)
+- #12650 `f118a7a` Fix issue: "default port not shown correctly in settings dialog" (251Labs)
+- #13251 `ea487f9` Rephrase Bech32 checkbox texts, and enable it with legacy address default (fanquake)
+- #12432 `f78e7f6` [qt] send: Clear All also resets coin control options (Sjors)
+- #12617 `21dd512` gui: Show messages as text not html (laanwj)
+- #12793 `cf6feb7` qt: Avoid reseting on resetguisettigs=0 (MarcoFalke)
+
+### Build system
+- #12474 `b0f692f` Allow depends system to support armv7l (hkjn)
+- #12585 `72a3290` depends: Switch to downloading expat from GitHub (fanquake)
+- #12648 `46ca8f3` test: Update trusted git root (MarcoFalke)
+- #11995 `686cb86` depends: Fix Qt build with Xcode 9 (fanquake)
+- #12636 `845838c` backport: #11995 Fix Qt build with Xcode 9 (fanquake)
+- #12946 `e055bc0` depends: Fix Qt build with XCode 9.3 (fanquake)
+- #12998 `7847b92` Default to defining endian-conversion DECLs in compat w/o config (TheBlueMatt)
+- #13544 `9fd3e00` depends: Update Qt download url (fanquake)
+- #12573 `88d1a64` Fix compilation when compiler do not support `__builtin_clz*` (532479301)
 
 ### Tests and QA
-- #11399 `a825d4a` Fix bip68-sequence rpc test (jl2012)
-- #11150 `847c75e` Add getmininginfo test (mess110)
-- #11407 `806c78f` add functional test for mempoolreplacement command line arg (instagibbs)
-- #11433 `e169349` Restore bitcoin-util-test py2 compatibility (MarcoFalke)
-- #11308 `2e1ac70` zapwallettxes: Wait up to 3s for mempool reload (MarcoFalke)
-- #10798 `716066d` test bitcoin-cli (jnewbery)
-- #11443 `019c492` Allow "make cov" out-of-tree; Fix rpc mapping check (MarcoFalke)
-- #11445 `51bad91` 0.15.1 Backports (MarcoFalke)
-- #11319 `2f0b30a` Fix error introduced into p2p-segwit.py, and prevent future similar errors (sdaftuar)
-- #10552 `e4605d9` Tests for zmqpubrawtx and zmqpubrawblock (achow101)
-- #11067 `eeb24a3` TestNode: Add wait_until_stopped helper method (MarcoFalke)
-- #11068 `5398f20` Move wait_until to util (MarcoFalke)
-- #11125 `812c870` Add bitcoin-cli -stdin and -stdinrpcpass functional tests (promag)
-- #11077 `1d80d1e` fix timeout issues from TestNode (jnewbery)
-- #11078 `f1ced0d` Make p2p-leaktests.py more robust (jnewbery)
-- #11210 `f3f7891` Stop test_bitcoin-qt touching ~/.bitcoin (MeshCollider)
-- #11234 `f0b6795` Remove redundant testutil.cpp|h files (MeshCollider)
-- #11215 `cef0319` fixups from set_test_params() (jnewbery)
-- #11345 `f9cf7b5` Check connectivity before sending in assumevalid.py (jnewbery)
-- #11091 `c276c1e` Increase initial RPC timeout to 60 seconds (laanwj)
-- #10711 `fc2aa09` Introduce TestNode (jnewbery)
-- #11230 `d8dd8e7` Fixup dbcrash interaction with add_nodes() (jnewbery)
-- #11241 `4424176` Improve signmessages functional test (mess110)
-- #11116 `2c4ff35` Unit tests for script/standard and IsMine functions (jimpo)
-- #11422 `a36f332` Verify DBWrapper iterators are taking snapshots (TheBlueMatt)
-- #11121 `bb5e7cb` TestNode tidyups (jnewbery)
-- #11521 `ca0f3f7` travis: move back to the minimal image (theuni)
-- #11538 `adbc9d1` Fix race condition failures in replace-by-fee.py, sendheaders.py (sdaftuar)
-- #11472 `4108879` Make tmpdir option an absolute path, misc cleanup (MarcoFalke)
-- #10853 `5b728c8` Fix RPC failure testing (again) (jnewbery)
-- #11310 `b6468d3` Test listwallets RPC (mess110)
+- #12447 `01f931b` Add missing signal.h header (laanwj)
+- #12545 `1286f3e` Use wait_until to ensure ping goes out (Empact)
+- #12804 `4bdb0ce` Fix intermittent rpc_net.py failure. (jnewbery)
+- #12553 `0e98f96` Prefer wait_until over polling with time.sleep (Empact)
+- #12486 `cfebd40` Round target fee to 8 decimals in assert_fee_amount (kallewoof)
+- #12843 `df38b13` Test starting bitcoind with -h and -version (jnewbery)
+- #12475 `41c29f6` Fix python TypeError in script.py (MarcoFalke)
+- #12638 `0a76ed2` Cache only chain and wallet for regtest datadir (MarcoFalke)
+- #12902 `7460945` Handle potential cookie race when starting node (sdaftuar)
+- #12904 `6c26df0` Ensure bitcoind processes are cleaned up when tests end (sdaftuar)
+- #13049 `9ea62a3` Backports (MarcoFalke)
+- #13201 `b8aacd6` Handle disconnect_node race (sdaftuar)
+- #13061 `170b309` Make tests pass after 2020 (bmwiedemann)
+- #13192 `79c4fff` [tests] Fixed intermittent failure in `p2p_sendheaders.py` (lmanners)
+- #13300 `d9c5630` qa: Initialize lockstack to prevent null pointer deref (MarcoFalke)
+- #13545 `e15e3a9` tests: Fix test case `streams_serializedata_xor` Remove Boost dependency. (practicalswift)
+- #13304 `cbdabef` qa: Fix `wallet_listreceivedby` race (MarcoFalke)
+- #13852 `b64f02f` Make signrawtransaction give an error when amount is needed but missing (ajtowns)
+- #13797 `6518bcd` bitcoinconsensus: invalid flags should be set to bitcoinconsensus_error type, add test cases covering bitcoinconsensus error codes (Thomas Kerin)
 
 ### Miscellaneous
-- #11377 `75997c3` Disallow uncompressed pubkeys in bitcoin-tx [multisig] output adds (TheBlueMatt)
-- #11437 `dea3b87` [Docs] Update Windows build instructions for using WSL and Ubuntu 17.04 (fanquake)
-- #11318 `8b61aee` Put back inadvertently removed copyright notices (gmaxwell)
-- #11442 `cf18f42` [Docs] Update OpenBSD Build Instructions for OpenBSD 6.2 (fanquake)
-- #10957 `50bd3f6` Avoid returning a BIP9Stats object with uninitialized values (practicalswift)
-- #11539 `01223a0` [verify-commits] Allow revoked keys to expire (TheBlueMatt)
+- #12518 `a17fecf` Bump leveldb subtree (MarcoFalke)
+- #12442 `f3b8d85` devtools: Exclude patches from lint-whitespace (MarcoFalke)
+- #12988 `acdf433` Hold cs_main while calling UpdatedBlockTip() signal (skeees)
+- #12985 `0684cf9` Windows: Avoid launching as admin when NSIS installer ends. (JeremyRand)
+- #503 `87ec334` Fix CVE-2018-12356 by hardening the regex (jmutkawoa)
+- #12887 `2291774` Add newlines to end of log messages (jnewbery)
+- #12859 `18b0c69` Bugfix: Include <memory> for `std::unique_ptr` (luke-jr)
+- #13131 `ce8aa54` Add Windows shutdown handler (ken2812221)
+- #13652 `20461fc` rpc: Fix that CWallet::AbandonTransaction would leave the grandchildren, etc. active (Empact)
 
+### Documentation
+- #12637 `60086dd` backport: #12556 fix version typo in getpeerinfo RPC call help (fanquake)
+- #13184 `4087dd0` RPC Docs: `gettxout*`: clarify bestblock and unspent counts (harding)
+- #13246 `6de7543` Bump to Ubuntu Bionic 18.04 in build-windows.md (ken2812221)
+- #12556 `e730b82` Fix version typo in getpeerinfo RPC call help (tamasblummer)
+- #13852 `9e116a6` [0.16] doc: correct the help output for -prune (hebasto)
 
 Credits
 =======
@@ -254,13 +154,23 @@ Thanks to everyone who directly contributed to this release:
 - Adrian Gallagher
 - aunyks
 - coblee
+- cryptonexii
 - gabrieldov
-- Martin Smith 
+- jmutkawoa
+- Martin Smith
+- NeMO84
 - ppm0
 - romanornr
 - shaolinfry
 - spl0i7
+- stedwms
 - ultragtx
 - VKoskiv
 - voidmain
+- wbsmolen
 - xinxi
+
+And to those that reported security issues:
+
+- Braydon Fuller
+- Himanshu Mehta
