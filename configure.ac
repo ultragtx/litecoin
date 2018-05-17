@@ -201,9 +201,9 @@ AC_ARG_ENABLE([zmq],
 
 AC_ARG_ENABLE([sse2],
     [AS_HELP_STRING([--enable-sse2],
-    [enable SSE2 instructions in the scrypt library. (default is disabled)])],
+    [enable SSE2 instructions in the scrypt library. (default is enabled)])],
     [use_sse2=$enableval],
-    [use_sse2=no])
+    [use_sse2=yes])
 
 AC_ARG_WITH([protoc-bindir],[AS_HELP_STRING([--with-protoc-bindir=BIN_DIR],[specify protoc bin path])], [protoc_bin_path=$withval], [])
 
@@ -1347,6 +1347,7 @@ echo "  with test     = $use_tests"
 echo "  with bench    = $use_bench"
 echo "  with upnp     = $use_upnp"
 echo "  use asm       = $use_asm"
+echo "  use scrypt sse2 = $use_sse2"
 echo "  debug enabled = $enable_debug"
 echo "  werror        = $enable_werror"
 echo
