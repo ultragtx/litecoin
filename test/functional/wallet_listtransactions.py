@@ -98,7 +98,8 @@ class ListTransactionsTest(BitcoinTestFramework):
         txs = [tx for tx in self.nodes[0].listtransactions(dummy="*", count=100, skip=0, include_watchonly=True) if "label" in tx and tx['label'] == 'watchonly']
         assert_array_result(txs, {"category": "receive", "amount": Decimal("0.1")}, {"txid": txid})
 
-        self.run_rbf_opt_in_test()
+        # Litecoin has RBF disabled
+        # self.run_rbf_opt_in_test()
 
     # Check that the opt-in-rbf flag works properly, for sent and received
     # transactions.
