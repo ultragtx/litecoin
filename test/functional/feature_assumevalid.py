@@ -144,7 +144,7 @@ class AssumeValidTest(BitcoinTestFramework):
         self.tip = block102.sha256
         self.block_time += 1
         height += 1
- 
+
         # Bury the assumed valid block 2100 deep
         for i in range(2100):
             block = create_block(self.tip, create_coinbase(height), self.block_time)
@@ -154,7 +154,7 @@ class AssumeValidTest(BitcoinTestFramework):
             self.tip = block.sha256
             self.block_time += 1
             height += 1
-    
+
         self.nodes[0].disconnect_p2ps()
 
         # Start node1 and node2 with assumevalid so they accept a block with a bad signature.
